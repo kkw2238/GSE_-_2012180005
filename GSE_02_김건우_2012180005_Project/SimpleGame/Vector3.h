@@ -25,7 +25,7 @@ public:
 	void SetY(const float othery) { y = othery; }
 	void SetZ(const float otherz) { z = otherz; }
 
-	void Normalize( const float min , const float max) {
+	void MinMax( const float min , const float max) {
 		x = x > max ? max : x;
 		y = y > max ? max : y;
 		z = z > max ? max : z;
