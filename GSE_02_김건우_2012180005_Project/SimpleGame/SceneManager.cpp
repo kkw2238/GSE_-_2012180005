@@ -1,10 +1,9 @@
 #include "stdafx.h"
-#include "ObjectManagement.h"
+#include "SceneManager.h"
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Renderer.h"
 #include "Utily.h"
-
 
 Object::Object()
 {
@@ -81,17 +80,63 @@ void Object::Update(float fElpsedtime = 0.0f)
 	Move(fElpsedtime);
 }
 
-
+//
 
 /*------------------------------------------------------------------------------*/
-void ObjectManagement::Update(float fElpsedtime)
+void SceneManager::Update(float fElpsedtime)
 {
 	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
-		(*p).Update(fElpsedtime);
+		(*(*p)).Update(fElpsedtime);
 }
 
-void ObjectManagement::Render()
+void SceneManager::Render()
 {
 	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
-		(*p).Render();
+		(*(*p)).Render();
+}
+
+int SceneManager::Add(Object& pObject) 
+{ 
+	if (!IsFull()) {
+		m_voObjects.push_back(std::unique_ptr<Object>(new Object(pObject)));	
+		return m_iCurrentObjectCount++;
+	}
+	return -1;
+}
+
+int SceneManager::Add(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity)
+{
+	if (!IsFull()) {
+		m_voObjects.push_back(std::unique_ptr<Object>(new Object(pos, size, color, rend, vDirection, fValocity)));
+		return m_iCurrentObjectCount++;
+	}
+	return -1;
+}
+
+int SceneManager::RandomCreateObject(const int n, Renderer* rend)
+{
+	std::mt19937 engine((unsigned int)time(NULL));
+
+	std::uniform_int_distribution<int> ui(-250, 250);
+	std::uniform_real_distribution<float> uf(0.0f, 1.0f);
+	std::uniform_real_distribution<float> ufspd(0.0f, 100.0f);
+
+	int i = 0;
+	for (i = 0; i < n; i++)
+	{
+		if (!IsFull())
+		{
+			Vector3 vecPos = Vector3(ui(engine) - 100, 100 - ui(engine), 0.0f);
+			Vector3 vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
+			//Vector4 vecColor = Vector4(uf(engine), uf(engine), uf(engine), uf(engine));
+			Vector4 vecColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+
+			Object tmp(vecPos, 20.0f, vecColor, rend, vecDirection, ufspd(engine));
+			Add(tmp);
+		}
+		else
+			return i;
+	}
+
+	return i;
 }

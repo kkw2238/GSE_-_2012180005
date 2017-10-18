@@ -1,13 +1,16 @@
 #pragma once
+#include "Vector2.h"
+
 class Vector3
 {
-private:
+public:
 	float x, y, z;
 
 public:
 	Vector3();
 	Vector3(float x, float y, float z);
 	Vector3(Vector3&& other) {};
+	Vector3(const Vector2& other);
 	Vector3(const Vector3& other);
 	Vector3(const Vector3* other);
 	~Vector3();
@@ -36,19 +39,19 @@ public:
 	}
 
 public:
-	Vector3* operator=(const Vector3& other) {
+	Vector3 operator=(const Vector3& other) {
 		x = other.x; y = other.y; z = other.z;
-		return this;
+		return Vector3(x, y, z);
 	}
 
-	Vector3* operator+(const Vector3& other) {
+	Vector3 operator+(Vector3& other) {
 		x += other.x; y += other.y; z += other.z;
-		return this;
+		return Vector3(x, y, z);
 	}
 
-	Vector3* operator-(const Vector3& other) {
+	Vector3 operator-(const Vector3& other) {
 		x -= other.x; y -= other.y; z -= other.z;
-		return this;
+		return Vector3(x, y, z);
 	}
 
 	Vector3 operator+=(const Vector3& other) {
@@ -56,9 +59,9 @@ public:
 		return Vector3(x, y, z);
 	}
 
-	Vector3* operator-=(const Vector3& other) {
+	Vector3 operator-=(const Vector3& other) {
 		x -= other.x; y -= other.y; z -= other.z;
-		return this;
+		return Vector3(x, y, z);
 	}
 
 	Vector3 operator/(const float value) {

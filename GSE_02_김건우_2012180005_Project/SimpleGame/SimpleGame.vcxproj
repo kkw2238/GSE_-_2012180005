@@ -155,7 +155,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ObjectManagement.h" />
+    <ClInclude Include="Collision.h" />
+    <ClInclude Include="SceneManager.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -163,10 +164,13 @@
     <ClInclude Include="Vector2.h" />
     <ClInclude Include="Vector3.h" />
     <ClInclude Include="Vector4.h" />
+    <ClInclude Include="Screen.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ObjectManagement.cpp" />
+    <ClCompile Include="Collision.cpp" />
+    <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Screen.cpp" />
     <ClCompile Include="SimpleGame.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

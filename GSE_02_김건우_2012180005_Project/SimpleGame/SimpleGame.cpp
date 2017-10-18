@@ -9,17 +9,16 @@
 */
 
 #include "stdafx.h"
-#include <iostream>
-#include <random>
-#include <chrono>
 #include "Dependencies\glew.h"
 #include "Dependencies\freeglut.h"
-
-#include "ObjectManagement.h"
+#include "SceneManager.h"
 #include "Renderer.h"
 
 Renderer *g_Renderer = NULL;
-ObjectManagement* g_objects = NULL;
+SceneManager* g_objects = NULL;
+
+bool g_LButtonDown = false;
+bool g_RButtonDown = false;
 
 void RenderScene(void)
 {
@@ -30,7 +29,6 @@ void RenderScene(void)
 	// Initialize Objects
 	
 	// Renderer Test
-	//g_Renderer->DrawSolidRect(0, 0, 0, 1, 1, 0, 1, 1);
 	g_objects->Render();
 	g_objects->Update(ElpsedTime);
 	/*
@@ -55,7 +53,11 @@ void MouseInput(int button, int state, int x, int y)
 
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
-		Object tmp(Vector3(x - 250, 250 - y , 0.0f), 20.0f, Vector4(uf(engine), uf(engine), uf(engine), uf(engine)), g_Renderer, Vector3(ui(engine), ui(engine), ui(engine)), 100.0f);
+		Vector3 vecPos = Vector3(x - 250, 250 - y, 0.0f);
+		Vector3 vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
+		Vector4 vecColor = Vector4(uf(engine), uf(engine), uf(engine), uf(engine));
+	
+		Object tmp(vecPos, 20.0f, vecColor, g_Renderer, vecDirection, 100.0f);
 		g_objects->Add(tmp);
 	}
 }
@@ -91,7 +93,9 @@ int main(int argc, char **argv)
 
 	// Initialize Renderer
 	g_Renderer = new Renderer(500, 500);
-	g_objects = new ObjectManagement();
+	g_objects = new SceneManager();
+
+	g_objects->RandomCreateObject(5000, g_Renderer);
 
 	if (!g_Renderer->IsInitialized())
 	{
@@ -107,6 +111,7 @@ int main(int argc, char **argv)
 	glutMainLoop();
 
 	delete g_Renderer;
+	delete g_objects;
 
     return 0;
 }

@@ -2,7 +2,11 @@
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Renderer.h"
+#include "Collision.h"
 #include <vector>
+#include <memory>
+
+const int MAX_OBJECTS_COUNT = 5000;
 
 class Object
 {
@@ -15,6 +19,7 @@ private:
 	float		m_fValocity;
 
 	Renderer*	m_pRenderer;
+	Collision	m_colAABB;
 
 public:
 	Object();
@@ -40,16 +45,27 @@ public:
 	void SetDirection(const Vector3& vDirection) { m_vDirection = vDirection; }
 };
 
-class ObjectManagement
+// 오브젝트 포인터를 넣어주고 비어 있는 공간에 새로운 오브젝트를 삽입.
+class SceneManager
 {
 private:
-	std::vector<Object> m_voObjects;
+	int m_iCurrentObjectCount;
+	std::vector<std::unique_ptr<Object>> m_voObjects;
 
 public:
-	ObjectManagement() {};
+	bool IsFull() const { return m_iCurrentObjectCount >= MAX_OBJECTS_COUNT; }
+
+public:
+	SceneManager() : m_iCurrentObjectCount(0) {};
 
 	void Update(float fElpsedtime);
 	void Render();
-	void Add(Object& pObject) { m_voObjects.push_back(pObject); }
+
+	int Add(Object& pObject);
+	int Add(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity);
+
+	void Destroy() { m_voObjects.clear(); }
+	int RandomCreateObject(const int n, Renderer* rend);
+
 };
 
