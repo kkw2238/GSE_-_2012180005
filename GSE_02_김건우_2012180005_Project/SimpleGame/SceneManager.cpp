@@ -15,7 +15,8 @@ Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* r
 	m_vColor(color),
 	m_pRenderer(rend),
 	m_vDirection(Vector3()),
-	m_fValocity(10.0f)
+	m_fValocity(10.0f),
+	m_colAABB(pos, size)
 {}
 
 Object::Object(float x, float y, float z, float size, float r, float g, float b, float a, Renderer* rend) :
@@ -24,7 +25,8 @@ Object::Object(float x, float y, float z, float size, float r, float g, float b,
 	m_vColor(Vector4(r, g, b, a)),
 	m_pRenderer(rend),
 	m_vDirection(Vector3()),
-	m_fValocity(10.0f)
+	m_fValocity(10.0f),
+	m_colAABB(Vector3(x, y, z), size)
 {}
 
 Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const Vector3& vDirection, float fValocity) :
@@ -33,7 +35,8 @@ Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* r
 	m_vColor(color),
 	m_pRenderer(rend),
 	m_vDirection(vDirection),
-	m_fValocity(fValocity)
+	m_fValocity(fValocity),
+	m_colAABB(pos, size)
 {}
 
 Object::Object(float x, float y, float z, float size, float r, float g, float b, float a, Renderer* rend, const Vector3& vDirection, float fValocity) :
@@ -42,7 +45,8 @@ Object::Object(float x, float y, float z, float size, float r, float g, float b,
 	m_vColor(Vector4(r, g, b, a)),
 	m_pRenderer(rend),
 	m_vDirection(vDirection),
-	m_fValocity(fValocity)
+	m_fValocity(fValocity),
+	m_colAABB(Vector3(x, y, z), size)
 {}
 
 
@@ -78,15 +82,40 @@ void Object::Move(const Vector3& movepos, float fElpasedtime = 0.0f)
 void Object::Update(float fElpsedtime = 0.0f)
 {
 	Move(fElpsedtime);
+	m_colAABB.RefreshCollision(Vector2(m_vPos.x, m_vPos.y), m_fSize);
 }
 
 //
+
+Object* Object::CollisionObject(Object& other)
+{
+	if (m_colAABB.IsCollision(other.m_colAABB))
+		return &other;
+
+	return nullptr;
+}
 
 /*------------------------------------------------------------------------------*/
 void SceneManager::Update(float fElpsedtime)
 {
 	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
 		(*(*p)).Update(fElpsedtime);
+
+	CheckObjectCollision();
+}
+
+void SceneManager::CheckObjectCollision() 
+{
+	Vector4 Red = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
+		for (auto iter = p + 1; iter != m_voObjects.end(); iter++) {
+			Object* oCollObject = (*(*p)).CollisionObject(*(*iter));
+			if (oCollObject != nullptr)
+			{
+				(*p)->SetColor(Red);
+				oCollObject->SetColor(Red);
+			}
+		}
 }
 
 void SceneManager::Render()
@@ -140,3 +169,4 @@ int SceneManager::RandomCreateObject(const int n, Renderer* rend)
 
 	return i;
 }
+

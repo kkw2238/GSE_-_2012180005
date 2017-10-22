@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 	g_Renderer = new Renderer(500, 500);
 	g_objects = new SceneManager();
 
-	g_objects->RandomCreateObject(5000, g_Renderer);
+	g_objects->RandomCreateObject(100, g_Renderer);
 
 	if (!g_Renderer->IsInitialized())
 	{

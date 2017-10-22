@@ -1,7 +1,12 @@
 #include "stdafx.h"
 #include "Collision.h"
 
-bool Collision::IsCollision(Collision& other) {
+Box::Box(const Vector3& vec3Mid, float size) : 
+	m_vec3BegPoint(Vector2(vec3Mid.x - size / 2, vec3Mid.y - size / 2)),
+	m_vec3EndPoint(Vector2(vec3Mid.x + size / 2, vec3Mid.y + size / 2))
+{}
+
+bool Collision::IsCollision(const Collision& other) {
 	Vector3 memberBeg = m_boxAABB.getBeg();
 	Vector3 memberEnd = m_boxAABB.getEnd();
 
@@ -14,4 +19,9 @@ bool Collision::IsCollision(Collision& other) {
 	if (memberEnd.y <= otherBeg.y) return false;
 
 	return true;
+}
+
+void Collision::RefreshCollision(Vector2& vMid, float size)
+{
+	m_boxAABB = Box(vMid, size);
 }

@@ -43,6 +43,11 @@ public:
 
 	void SetValocity(const float fValocity) { m_fValocity = fValocity; }
 	void SetDirection(const Vector3& vDirection) { m_vDirection = vDirection; }
+	void SetColor(Vector4& vColor) { m_vColor = vColor; }
+
+	Collision GetCollision() const { return m_colAABB; }
+
+	Object* CollisionObject(Object& other);
 };
 
 // 오브젝트 포인터를 넣어주고 비어 있는 공간에 새로운 오브젝트를 삽입.
@@ -60,6 +65,7 @@ public:
 
 	void Update(float fElpsedtime);
 	void Render();
+	void CheckObjectCollision();
 
 	int Add(Object& pObject);
 	int Add(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity);
