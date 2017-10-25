@@ -16,7 +16,8 @@ Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* r
 	m_pRenderer(rend),
 	m_vDirection(Vector3()),
 	m_fValocity(10.0f),
-	m_colAABB(pos, size)
+	m_colAABB(pos, size),
+	m_fLife(5.0f)
 {}
 
 Object::Object(float x, float y, float z, float size, float r, float g, float b, float a, Renderer* rend) :
@@ -26,7 +27,8 @@ Object::Object(float x, float y, float z, float size, float r, float g, float b,
 	m_pRenderer(rend),
 	m_vDirection(Vector3()),
 	m_fValocity(10.0f),
-	m_colAABB(Vector3(x, y, z), size)
+	m_colAABB(Vector3(x, y, z), size),
+	m_fLife(5.0f)
 {}
 
 Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const Vector3& vDirection, float fValocity) :
@@ -36,7 +38,8 @@ Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* r
 	m_pRenderer(rend),
 	m_vDirection(vDirection),
 	m_fValocity(fValocity),
-	m_colAABB(pos, size)
+	m_colAABB(pos, size),
+	m_fLife(5.0f)
 {}
 
 Object::Object(float x, float y, float z, float size, float r, float g, float b, float a, Renderer* rend, const Vector3& vDirection, float fValocity) :
@@ -46,7 +49,8 @@ Object::Object(float x, float y, float z, float size, float r, float g, float b,
 	m_pRenderer(rend),
 	m_vDirection(vDirection),
 	m_fValocity(fValocity),
-	m_colAABB(Vector3(x, y, z), size)
+	m_colAABB(Vector3(x, y, z), size),
+	m_fLife(5.0f)
 {}
 
 
@@ -98,6 +102,8 @@ Object* Object::CollisionObject(Object& other)
 /*------------------------------------------------------------------------------*/
 void SceneManager::Update(float fElpsedtime)
 {
+	ObjectDamage(fElpsedtime);
+
 	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
 		(*(*p)).Update(fElpsedtime);
 
@@ -106,16 +112,25 @@ void SceneManager::Update(float fElpsedtime)
 
 void SceneManager::CheckObjectCollision() 
 {
-	Vector4 Red = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+	Vector4 Red(1.0f, 0.0f, 0.0f, 1.0f);
+	Vector4 White(1.0f, 1.0f, 1.0f, 1.0f);
+
 	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
+		(*p)->SetColor(White);
+
+	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
+	{
 		for (auto iter = p + 1; iter != m_voObjects.end(); iter++) {
 			Object* oCollObject = (*(*p)).CollisionObject(*(*iter));
-			if (oCollObject != nullptr)
-			{
+			if (oCollObject != nullptr) {
 				(*p)->SetColor(Red);
 				oCollObject->SetColor(Red);
 			}
 		}
+
+		if (m_sScreen.CollisionOther((*p)->GetCollision()) != -1)
+			(*p)->SetDirection((*p)->GetDirection() * -1);
+	}
 }
 
 void SceneManager::Render()
@@ -133,16 +148,16 @@ int SceneManager::Add(Object& pObject)
 	return -1;
 }
 
-int SceneManager::Add(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity)
+int SceneManager::Add(const Vector3& pos, float size, const Vector4& color, const  Vector3& vDirection, float fValocity)
 {
 	if (!IsFull()) {
-		m_voObjects.push_back(std::unique_ptr<Object>(new Object(pos, size, color, rend, vDirection, fValocity)));
+		m_voObjects.push_back(std::unique_ptr<Object>(new Object(pos, size, color, m_pRenderer, vDirection, fValocity)));
 		return m_iCurrentObjectCount++;
 	}
 	return -1;
 }
 
-int SceneManager::RandomCreateObject(const int n, Renderer* rend)
+int SceneManager::RandomCreateObject(const int n)
 {
 	std::mt19937 engine((unsigned int)time(NULL));
 
@@ -160,7 +175,7 @@ int SceneManager::RandomCreateObject(const int n, Renderer* rend)
 			//Vector4 vecColor = Vector4(uf(engine), uf(engine), uf(engine), uf(engine));
 			Vector4 vecColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
-			Object tmp(vecPos, 20.0f, vecColor, rend, vecDirection, ufspd(engine));
+			Object tmp(vecPos, 20.0f, vecColor, m_pRenderer, vecDirection, ufspd(engine));
 			Add(tmp);
 		}
 		else
@@ -170,3 +185,41 @@ int SceneManager::RandomCreateObject(const int n, Renderer* rend)
 	return i;
 }
 
+void SceneManager::InitSceneManager()
+{
+	m_pRenderer = new Renderer(500, 500);
+	m_sScreen = Screen(500, 500);
+	m_tTime = Time();
+}
+
+void SceneManager::Destroy() 
+{ 
+	m_voObjects.clear(); 
+
+	delete(m_pRenderer);
+}
+
+void SceneManager::Run()
+{
+	m_tTime.Update(60.0f);
+	float fElapsedTime = m_tTime.Tick();
+
+	Update(fElapsedTime);
+	Render();
+	
+	m_tTime.Tock();
+}
+
+void SceneManager::ObjectDamage(float fElapsedTime)
+{
+	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
+	{
+		(*(*p)).Damage(fElapsedTime);
+		if ((*(*p)).isDead())
+		{
+			m_voObjects.erase(p);
+		}
+		
+	}
+	std::cout << m_voObjects.size() << std::endl;
+}

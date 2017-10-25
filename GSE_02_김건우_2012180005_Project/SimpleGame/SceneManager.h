@@ -3,6 +3,9 @@
 #include "Vector4.h"
 #include "Renderer.h"
 #include "Collision.h"
+#include "Screen.h"
+#include "Time.h"
+
 #include <vector>
 #include <memory>
 
@@ -17,6 +20,7 @@ private:
 
 	float		m_fSize;
 	float		m_fValocity;
+	float		m_fLife;
 
 	Renderer*	m_pRenderer;
 	Collision	m_colAABB;
@@ -44,7 +48,14 @@ public:
 	void SetValocity(const float fValocity) { m_fValocity = fValocity; }
 	void SetDirection(const Vector3& vDirection) { m_vDirection = vDirection; }
 	void SetColor(Vector4& vColor) { m_vColor = vColor; }
+	
+	void Damage(const float fDamage) { 
+		m_fLife -= fDamage; 
+	}
 
+	bool isDead() const { return m_fLife < 0.0f; }
+
+	Vector3 GetDirection() const { return m_vDirection; }
 	Collision GetCollision() const { return m_colAABB; }
 
 	Object* CollisionObject(Object& other);
@@ -55,23 +66,33 @@ class SceneManager
 {
 private:
 	int m_iCurrentObjectCount;
+
+	Renderer* m_pRenderer;
+	Screen m_sScreen;
+	Time m_tTime;
+
 	std::vector<std::unique_ptr<Object>> m_voObjects;
 
 public:
 	bool IsFull() const { return m_iCurrentObjectCount >= MAX_OBJECTS_COUNT; }
 
 public:
-	SceneManager() : m_iCurrentObjectCount(0) {};
+	SceneManager() : m_iCurrentObjectCount(0) { InitSceneManager(); };
+	~SceneManager() { Destroy(); }
 
+	void Run();
 	void Update(float fElpsedtime);
 	void Render();
+	void ObjectDamage(float fElapsedTime);
 	void CheckObjectCollision();
-
+	void InitSceneManager();
+	
 	int Add(Object& pObject);
-	int Add(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity);
+	int Add(const Vector3& pos, float size, const Vector4& color, const  Vector3& vDirection, float fValocity);
 
-	void Destroy() { m_voObjects.clear(); }
-	int RandomCreateObject(const int n, Renderer* rend);
+	void Destroy();
+
+	int RandomCreateObject(const int n);
 
 };
 

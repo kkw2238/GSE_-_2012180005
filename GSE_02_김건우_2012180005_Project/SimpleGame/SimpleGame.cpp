@@ -14,7 +14,6 @@
 #include "SceneManager.h"
 #include "Renderer.h"
 
-Renderer *g_Renderer = NULL;
 SceneManager* g_objects = NULL;
 
 bool g_LButtonDown = false;
@@ -29,8 +28,7 @@ void RenderScene(void)
 	// Initialize Objects
 	
 	// Renderer Test
-	g_objects->Render();
-	g_objects->Update(ElpsedTime);
+	g_objects->Run();
 	/*
 		DrawSolidRect( x , y , z , float size , float r , g , b , a ) 
 	*/
@@ -57,8 +55,7 @@ void MouseInput(int button, int state, int x, int y)
 		Vector3 vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
 		Vector4 vecColor = Vector4(uf(engine), uf(engine), uf(engine), uf(engine));
 	
-		Object tmp(vecPos, 20.0f, vecColor, g_Renderer, vecDirection, 100.0f);
-		g_objects->Add(tmp);
+		g_objects->Add(vecPos, 10.0f, vecColor, vecDirection, 100.0f);
 	}
 }
 
@@ -92,15 +89,9 @@ int main(int argc, char **argv)
 	}
 
 	// Initialize Renderer
-	g_Renderer = new Renderer(500, 500);
 	g_objects = new SceneManager();
 
-	g_objects->RandomCreateObject(100, g_Renderer);
-
-	if (!g_Renderer->IsInitialized())
-	{
-		std::cout << "Renderer could not be initialized.. \n";
-	}
+	g_objects->RandomCreateObject(100);
 
 	glutDisplayFunc(RenderScene);
 	glutIdleFunc(Idle);
@@ -110,7 +101,6 @@ int main(int argc, char **argv)
 
 	glutMainLoop();
 
-	delete g_Renderer;
 	delete g_objects;
 
     return 0;
