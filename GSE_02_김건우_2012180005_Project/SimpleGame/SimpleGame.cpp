@@ -9,8 +9,7 @@
 */
 
 #include "stdafx.h"
-#include "Dependencies\glew.h"
-#include "Dependencies\freeglut.h"
+
 #include "SceneManager.h"
 #include "Renderer.h"
 
@@ -51,7 +50,7 @@ void MouseInput(int button, int state, int x, int y)
 
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
-		Vector3 vecPos = Vector3(x - 250, 250 - y, 0.0f);
+		Vector3 vecPos = Vector3((float)x - 250.f, 250.f - (float)y, 0.0f);
 		Vector3 vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
 		Vector4 vecColor = Vector4(uf(engine), uf(engine), uf(engine), uf(engine));
 	

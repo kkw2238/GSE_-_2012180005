@@ -207,19 +207,19 @@ void SceneManager::Run()
 	Update(fElapsedTime);
 	Render();
 	
+
+	std::string titlename = m_tTime.GetFrameTime();
+	glutSetWindowTitle(titlename.c_str());
 	m_tTime.Tock();
 }
 
 void SceneManager::ObjectDamage(float fElapsedTime)
 {
-	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
+	for (u_int i = 0; i < m_voObjects.size() ; ++i)
 	{
-		(*(*p)).Damage(fElapsedTime);
-		if ((*(*p)).isDead())
-		{
-			m_voObjects.erase(p);
-		}
+		(*(m_voObjects[i])).Damage(fElapsedTime);
+		if ((*(m_voObjects[i])).isDead())
+			m_voObjects.erase(m_voObjects.begin() + i--);
 		
 	}
-	std::cout << m_voObjects.size() << std::endl;
 }
