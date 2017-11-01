@@ -10,29 +10,30 @@
 #include <memory>
 
 const int MAX_OBJECTS_COUNT = 5000;
+static enum ObjectType { OBJECT_BUILDING, OBJECT_CHARACTER, OBJECT_BULLET, OBJECT_ARROW };
 
 class Object
 {
 private:
-	Vector3		m_vPos;
-	Vector3		m_vDirection;
-	Vector4		m_vColor;
+	Vector3						m_vPos;
+	Vector3						m_vDirection;
+	Vector4						m_vColor;
 
-	float		m_fSize;
-	float		m_fValocity;
-	float		m_fLife;
+	bool						m_bLive;
 
-	Renderer*	m_pRenderer;
-	Collision	m_colAABB;
+	float						m_fSize;
+	float						m_fValocity;
+	float						m_fLife;
 
+	Renderer*					m_pRenderer;
+	Collision					m_colAABB;
+	ObjectType					m_eObjectType;
+	
 public:
 	Object();
 
-	Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend);
-	Object(float x, float y, float z, float size, float r, float g, float b, float a, Renderer* rend);
-
-	Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity);
-	Object(float x, float y, float z, float size, float r, float g, float b, float a, Renderer* rend, const Vector3& vDirection, float fValocity);
+	Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity, ObjectType type, float Life);
+	Object(float x, float y, float z, float size, float r, float g, float b, float a, Renderer* rend, const Vector3& vDirection, float fValocity, ObjectType type, float Life);
 
 	~Object();
 
@@ -42,21 +43,24 @@ public:
 
 public:
 	void Move(float Elpsedtime);
-	void Move(float x, float y, float z);
-	void Move(const Vector3& movepos, float fElpsedtime);
 
 	void SetValocity(const float fValocity) { m_fValocity = fValocity; }
 	void SetDirection(const Vector3& vDirection) { m_vDirection = vDirection; }
 	void SetColor(Vector4& vColor) { m_vColor = vColor; }
-	
+	void SetDead(bool isDead) { m_bLive = isDead; }
+
 	void Damage(const float fDamage) { 
 		m_fLife -= fDamage; 
+		if (m_fLife <= 0.0f) SetDead(false);
 	}
 
-	bool isDead() const { return m_fLife < 0.0f; }
+	bool isLive() const { return m_bLive; }
+
+	float GetLife() const { return m_fLife; }
 
 	Vector3 GetDirection() const { return m_vDirection; }
 	Collision GetCollision() const { return m_colAABB; }
+	ObjectType GetType() const { return m_eObjectType; }
 
 	Object* CollisionObject(Object& other);
 };
@@ -64,8 +68,10 @@ public:
 // 오브젝트 포인터를 넣어주고 비어 있는 공간에 새로운 오브젝트를 삽입.
 class SceneManager
 {
+
 private:
 	int m_iCurrentObjectCount;
+	float m_fDelayTime;
 
 	Renderer* m_pRenderer;
 	Screen m_sScreen;
@@ -77,18 +83,17 @@ public:
 	bool IsFull() const { return m_iCurrentObjectCount >= MAX_OBJECTS_COUNT; }
 
 public:
-	SceneManager() : m_iCurrentObjectCount(0) { InitSceneManager(); };
+	SceneManager() : m_iCurrentObjectCount(0), m_fDelayTime(0.0f){ InitSceneManager(); };
 	~SceneManager() { Destroy(); }
 
 	void Run();
 	void Update(float fElpsedtime);
 	void Render();
-	void ObjectDamage(float fElapsedTime);
 	void CheckObjectCollision();
 	void InitSceneManager();
 	
 	int Add(Object& pObject);
-	int Add(const Vector3& pos, float size, const Vector4& color, const  Vector3& vDirection, float fValocity);
+	int Add(Vector3& pos, ObjectType type);
 
 	void Destroy();
 
