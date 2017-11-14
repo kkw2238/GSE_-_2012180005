@@ -54,7 +54,7 @@ void MouseInput(int button, int state, int x, int y)
 		Vector3 vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
 		Vector4 vecColor = Vector4(uf(engine), uf(engine), uf(engine), uf(engine));
 	
-		g_objects->Add(vecPos, OBJECT_CHARACTER);
+		g_objects->Add(vecPos, 10.0f, vecColor, vecDirection, 100.0f);
 	}
 }
 
@@ -89,6 +89,8 @@ int main(int argc, char **argv)
 
 	// Initialize Renderer
 	g_objects = new SceneManager();
+
+	g_objects->RandomCreateObject(100);
 
 	glutDisplayFunc(RenderScene);
 	glutIdleFunc(Idle);

@@ -9,7 +9,29 @@ Object::Object()
 {
 }
 
-Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const Vector3& vDirection, float fValocity, ObjectType type, float flife) :
+Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend) :
+	m_vPos(pos),
+	m_fSize(size),
+	m_vColor(color),
+	m_pRenderer(rend),
+	m_vDirection(Vector3()),
+	m_fValocity(10.0f),
+	m_colAABB(pos, size),
+	m_fLife(5.0f)
+{}
+
+Object::Object(float x, float y, float z, float size, float r, float g, float b, float a, Renderer* rend) :
+	m_vPos(Vector3(x, y, z)),
+	m_fSize(size),
+	m_vColor(Vector4(r, g, b, a)),
+	m_pRenderer(rend),
+	m_vDirection(Vector3()),
+	m_fValocity(10.0f),
+	m_colAABB(Vector3(x, y, z), size),
+	m_fLife(5.0f)
+{}
+
+Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const Vector3& vDirection, float fValocity) :
 	m_vPos(pos),
 	m_fSize(size),
 	m_vColor(color),
@@ -17,13 +39,10 @@ Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* r
 	m_vDirection(vDirection),
 	m_fValocity(fValocity),
 	m_colAABB(pos, size),
-	m_fLife(flife),
-	m_eObjectType(type),
-	m_bLive(true)
-{
-}
+	m_fLife(5.0f)
+{}
 
-Object::Object(float x, float y, float z, float size, float r, float g, float b, float a, Renderer* rend, const Vector3& vDirection, float fValocity, ObjectType type, float flife) :
+Object::Object(float x, float y, float z, float size, float r, float g, float b, float a, Renderer* rend, const Vector3& vDirection, float fValocity) :
 	m_vPos(Vector3(x, y, z)),
 	m_fSize(size),
 	m_vColor(Vector4(r, g, b, a)),
@@ -31,9 +50,7 @@ Object::Object(float x, float y, float z, float size, float r, float g, float b,
 	m_vDirection(vDirection),
 	m_fValocity(fValocity),
 	m_colAABB(Vector3(x, y, z), size),
-	m_fLife(flife),
-	m_eObjectType(type),
-	m_bLive(true)
+	m_fLife(5.0f)
 {}
 
 
@@ -51,10 +68,17 @@ void Object::Render()
 
 void Object::Move(float Elpsedtime = 0.0f)
 {
-	if (m_eObjectType == OBJECT_BUILDING) return;
-	Vector3 a = m_vDirection.Normalize() * m_fValocity * Elpsedtime;
 	m_vPos += m_vDirection.Normalize() * m_fValocity * Elpsedtime;
+}
 
+void Object::Move(float x, float y, float z)
+{
+	m_vPos += Vector3(x, y, z);
+}
+
+void Object::Move(const Vector3& movepos, float fElpasedtime = 0.0f)
+{
+	m_vPos = m_vPos.Lerp(movepos, fElpasedtime);
 }
 
 //
@@ -69,32 +93,17 @@ void Object::Update(float fElpsedtime = 0.0f)
 
 Object* Object::CollisionObject(Object& other)
 {
-	if (m_eObjectType == other.GetType()) return nullptr;
-	if (m_eObjectType == OBJECT_BUILDING && other.GetType() == OBJECT_BULLET) return nullptr;
-
-	if (m_colAABB.IsCollision(other.m_colAABB)) {
-
-		Damage(other.GetLife());
-		if (other.GetType() == OBJECT_BULLET) other.SetDead(false);
-		else other.Damage(GetLife());
-
+	if (m_colAABB.IsCollision(other.m_colAABB))
 		return &other;
-	}
+
 	return nullptr;
 }
 
 /*------------------------------------------------------------------------------*/
 void SceneManager::Update(float fElpsedtime)
 {
-	m_fDelayTime += fElpsedtime;
+	ObjectDamage(fElpsedtime);
 
-	if (m_fDelayTime > 0.5f) {
-		if (m_voObjects.size() == 0);
-		else if (m_voObjects[0]->GetType() == OBJECT_BUILDING) {
-			Add(Vector3(0.0f, 0.0f, 0.0f), OBJECT_BULLET);
-			m_fDelayTime = 0.0f;
-		}
-	};
 	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
 		(*(*p)).Update(fElpsedtime);
 
@@ -103,17 +112,24 @@ void SceneManager::Update(float fElpsedtime)
 
 void SceneManager::CheckObjectCollision() 
 {
-	for (int i = 0; i < m_voObjects.size(); i++)
+	Vector4 Red(1.0f, 0.0f, 0.0f, 1.0f);
+	Vector4 White(1.0f, 1.0f, 1.0f, 1.0f);
+
+	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
+		(*p)->SetColor(White);
+
+	for (auto p = m_voObjects.begin(); p != m_voObjects.end(); p++)
 	{
-		for (int j = i + 1; j < m_voObjects.size(); j++) {
-			Object* oCollObject = m_voObjects[i]->CollisionObject(*(m_voObjects[j]));
+		for (auto iter = p + 1; iter != m_voObjects.end(); iter++) {
+			Object* oCollObject = (*(*p)).CollisionObject(*(*iter));
 			if (oCollObject != nullptr) {
-				if (!m_voObjects[i]->isLive()) m_voObjects.erase(m_voObjects.begin() + i);
-					
+				(*p)->SetColor(Red);
+				oCollObject->SetColor(Red);
 			}
 		}
-		if (m_sScreen.CollisionOther(m_voObjects[i]->GetCollision()) != -1)
-			m_voObjects[i]->SetDirection(m_voObjects[i]->GetDirection() * -1);
+
+		if (m_sScreen.CollisionOther((*p)->GetCollision()) != -1)
+			(*p)->SetDirection((*p)->GetDirection() * -1);
 	}
 }
 
@@ -126,56 +142,16 @@ void SceneManager::Render()
 int SceneManager::Add(Object& pObject) 
 { 
 	if (!IsFull()) {
-		m_voObjects.push_back(std::unique_ptr<Object>(new Object(pObject)));
+		m_voObjects.push_back(std::unique_ptr<Object>(new Object(pObject)));	
 		return m_iCurrentObjectCount++;
 	}
 	return -1;
 }
 
-int SceneManager::Add(Vector3& pos, ObjectType type)
+int SceneManager::Add(const Vector3& pos, float size, const Vector4& color, const  Vector3& vDirection, float fValocity)
 {
-
-	std::mt19937 engine((unsigned int)time(NULL));
-	std::uniform_int_distribution<int> ui(-250, 250);
-
-	Vector3 vecDirection;
-	Vector4 vecColor;
-	float fsize = 0.0f;
-	float fValocity = 0.0f;
-	float fLife = 0.0f;
-
-	switch (type) {
-	case OBJECT_BUILDING:
-		vecColor	 = Vector4(1.0f, 1.0f, 0.0f, 1.0f);
-		fValocity	 = 0.0f;
-		fsize		 = 50.0f;
-		fLife		 = 500.0f;
-		vecDirection = Vector3(0.0f, 0.0f, 0.0f);
-		break;
-	case OBJECT_CHARACTER:
-		fValocity	 = 100.0f;
-		fsize		 = 10.0f;
-		fLife		 = 10.0f;
-		vecColor	 = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-		vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
-		break;
-	case OBJECT_BULLET:
-		fValocity	 = 300.0f;
-		fsize		 = 2.0f;
-		fLife		 = 20.0f;
-		vecColor	 = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-		vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
-		break;
-	case OBJECT_ARROW:
-		fValocity	 = 100.0f;
-		fsize		 = 2.0f;
-		vecColor	 = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-		vecDirection = Vector3(1.0f, 1.0f, 0.0f);
-		break;
-	}
-
 	if (!IsFull()) {
-		m_voObjects.push_back(std::unique_ptr<Object>(new Object(pos, fsize, vecColor, m_pRenderer, vecDirection, fValocity, type, fLife)));
+		m_voObjects.push_back(std::unique_ptr<Object>(new Object(pos, size, color, m_pRenderer, vDirection, fValocity)));
 		return m_iCurrentObjectCount++;
 	}
 	return -1;
@@ -199,7 +175,7 @@ int SceneManager::RandomCreateObject(const int n)
 			//Vector4 vecColor = Vector4(uf(engine), uf(engine), uf(engine), uf(engine));
 			Vector4 vecColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
-			Object tmp(vecPos, 20.0f, vecColor, m_pRenderer, vecDirection, 10.0f, OBJECT_CHARACTER, 100.0f);
+			Object tmp(vecPos, 20.0f, vecColor, m_pRenderer, vecDirection, ufspd(engine));
 			Add(tmp);
 		}
 		else
@@ -214,7 +190,6 @@ void SceneManager::InitSceneManager()
 	m_pRenderer = new Renderer(500, 500);
 	m_sScreen = Screen(500, 500);
 	m_tTime = Time();
-	Add(Vector3(0.0f, 0.0f, 0.0f), OBJECT_BUILDING);
 }
 
 void SceneManager::Destroy() 
@@ -232,7 +207,19 @@ void SceneManager::Run()
 	Update(fElapsedTime);
 	Render();
 	
+
 	std::string titlename = m_tTime.GetFrameTime();
 	glutSetWindowTitle(titlename.c_str());
 	m_tTime.Tock();
+}
+
+void SceneManager::ObjectDamage(float fElapsedTime)
+{
+	for (u_int i = 0; i < m_voObjects.size() ; ++i)
+	{
+		(*(m_voObjects[i])).Damage(fElapsedTime);
+		if ((*(m_voObjects[i])).isDead())
+			m_voObjects.erase(m_voObjects.begin() + i--);
+		
+	}
 }
