@@ -54,7 +54,7 @@ void MouseInput(int button, int state, int x, int y)
 		Vector3 vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
 		Vector4 vecColor = Vector4(uf(engine), uf(engine), uf(engine), uf(engine));
 	
-		g_objects->Add(vecPos, OBJECT_CHARACTER);
+		g_objects->CreateNewObject(vecPos, OBJECT_CHARACTER);
 	}
 }
 

@@ -11,6 +11,12 @@
 #include <Windows.h>
 #include <string>
 
+#include <vector>
+#include <memory>
+#include <list>
+#include "SceneManager.h"
+
+
 #pragma comment(lib,"Winmm.lib")
 
 #include "Dependencies\glew.h"
@@ -18,3 +24,5 @@
 
 const int WIN_WIDTH  = 500;
 const int WIN_HEIGHT = 500;
+
+void ClearDeletedObject(std::list<std::shared_ptr<Object>>& objectlist, ObjectType objtype);

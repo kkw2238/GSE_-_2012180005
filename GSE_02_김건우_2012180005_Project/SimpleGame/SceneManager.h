@@ -6,8 +6,6 @@
 #include "Screen.h"
 #include "Time.h"
 
-#include <vector>
-#include <memory>
 
 const int MAX_OBJECTS_COUNT = 5000;
 static enum ObjectType { OBJECT_BUILDING, OBJECT_CHARACTER, OBJECT_BULLET, OBJECT_ARROW };
@@ -15,19 +13,24 @@ static enum ObjectType { OBJECT_BUILDING, OBJECT_CHARACTER, OBJECT_BULLET, OBJEC
 class Object
 {
 private:
-	Vector3						m_vPos;
-	Vector3						m_vDirection;
-	Vector4						m_vColor;
+	Vector3										m_vPos;
+	Vector3										m_vDirection;
+	Vector4										m_vColor;
 
-	bool						m_bLive;
+	bool										m_bLive;
 
-	float						m_fSize;
-	float						m_fValocity;
-	float						m_fLife;
+	float										m_fSize;
+	float										m_fValocity;
+	float										m_fLife;
+	float										m_fActionTime;
+	float										m_fActionDelay;
 
-	Renderer*					m_pRenderer;
-	Collision					m_colAABB;
-	ObjectType					m_eObjectType;
+	int											m_itexID;
+	Renderer*									m_pRenderer;
+	Collision									m_colAABB;
+	ObjectType									m_eObjectType;
+
+	std::list<std::shared_ptr<Object>>			m_lpChildObject;
 	
 public:
 	Object();
@@ -47,27 +50,33 @@ public:
 	void SetValocity(const float fValocity) { m_fValocity = fValocity; }
 	void SetDirection(const Vector3& vDirection) { m_vDirection = vDirection; }
 	void SetColor(Vector4& vColor) { m_vColor = vColor; }
-	void SetDead(bool isDead) { m_bLive = isDead; }
+	void SetLive(bool isDead) { m_bLive = isDead; }
 
-	void Damage(const float fDamage) { 
-		m_fLife -= fDamage; 
-		if (m_fLife <= 0.0f) SetDead(false);
+	void AddChildObject(std::shared_ptr<Object>& child) {
+		m_lpChildObject.push_back(child);
+		m_fActionTime = 0.0f;
 	}
 
+	void Damage(const float fDamage);
+
 	bool isLive() const { return m_bLive; }
+	bool CoolOn() const { return m_fActionTime > m_fActionDelay; }
 
 	float GetLife() const { return m_fLife; }
 
 	Vector3 GetDirection() const { return m_vDirection; }
+	Vector3 GetPosition() const { return m_vPos; }
 	Collision GetCollision() const { return m_colAABB; }
 	ObjectType GetType() const { return m_eObjectType; }
 
-	Object* CollisionObject(Object& other);
+	bool CollisionObject(std::shared_ptr<Object>& other);
 };
 
 // 오브젝트 포인터를 넣어주고 비어 있는 공간에 새로운 오브젝트를 삽입.
 class SceneManager
 {
+public:
+	using VISP = std::vector<std::list<std::shared_ptr<Object>>>;
 
 private:
 	int m_iCurrentObjectCount;
@@ -77,13 +86,13 @@ private:
 	Screen m_sScreen;
 	Time m_tTime;
 
-	std::vector<std::unique_ptr<Object>> m_voObjects;
+	VISP m_voObjects;
 
 public:
 	bool IsFull() const { return m_iCurrentObjectCount >= MAX_OBJECTS_COUNT; }
 
 public:
-	SceneManager() : m_iCurrentObjectCount(0), m_fDelayTime(0.0f){ InitSceneManager(); };
+	SceneManager();
 	~SceneManager() { Destroy(); }
 
 	void Run();
@@ -93,7 +102,7 @@ public:
 	void InitSceneManager();
 	
 	int Add(Object& pObject);
-	int Add(Vector3& pos, ObjectType type);
+	std::shared_ptr<Object>* CreateNewObject(Vector3& pos, ObjectType type);
 
 	void Destroy();
 
