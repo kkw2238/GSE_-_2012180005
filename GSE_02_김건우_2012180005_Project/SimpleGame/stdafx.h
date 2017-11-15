@@ -23,6 +23,6 @@
 #include "Dependencies\freeglut.h"
 
 const int WIN_WIDTH  = 500;
-const int WIN_HEIGHT = 500;
+const int WIN_HEIGHT = 800;
 
 void ClearDeletedObject(std::list<std::shared_ptr<Object>>& objectlist, ObjectType objtype);

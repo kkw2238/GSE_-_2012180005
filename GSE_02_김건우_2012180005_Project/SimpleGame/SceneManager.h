@@ -8,7 +8,7 @@
 
 
 const int MAX_OBJECTS_COUNT = 5000;
-static enum ObjectType { OBJECT_BUILDING, OBJECT_CHARACTER, OBJECT_BULLET, OBJECT_ARROW };
+static enum ObjectType { OBJECT_BUILDING, OBJECT_CHARACTER, OBJECT_BULLET, OBJECT_ARROW, TEAM_1, TEAM_2 };
 
 class Object
 {
@@ -29,15 +29,15 @@ private:
 	Renderer*									m_pRenderer;
 	Collision									m_colAABB;
 	ObjectType									m_eObjectType;
+	ObjectType									m_eTeamType;
 
 	std::list<std::shared_ptr<Object>>			m_lpChildObject;
 	
 public:
 	Object();
 
-	Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity, ObjectType type, float Life);
-	Object(float x, float y, float z, float size, float r, float g, float b, float a, Renderer* rend, const Vector3& vDirection, float fValocity, ObjectType type, float Life);
-
+	Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity, ObjectType type, ObjectType team, float Life);
+	
 	~Object();
 
 public:
@@ -68,6 +68,7 @@ public:
 	Vector3 GetPosition() const { return m_vPos; }
 	Collision GetCollision() const { return m_colAABB; }
 	ObjectType GetType() const { return m_eObjectType; }
+	ObjectType GetTeam() const { return m_eTeamType; }
 
 	bool CollisionObject(std::shared_ptr<Object>& other);
 };
@@ -80,14 +81,17 @@ public:
 
 private:
 	int m_iCurrentObjectCount;
-	float m_fDelayTime;
+	float m_fTeam1CharacterCooldown;
+	float m_fTeam2CharacterCooldown;
 
 	Renderer* m_pRenderer;
 	Screen m_sScreen;
 	Time m_tTime;
 
-	VISP m_voObjects;
-
+	std::list<std::shared_ptr<Object>>	m_lBuildingObjects;
+	std::list<std::shared_ptr<Object>>	m_lBulletObjects;
+	std::list<std::shared_ptr<Object>>	m_lCharacterObjects;
+	std::list<std::shared_ptr<Object>>	m_lArraowObjects;
 public:
 	bool IsFull() const { return m_iCurrentObjectCount >= MAX_OBJECTS_COUNT; }
 
@@ -101,8 +105,8 @@ public:
 	void CheckObjectCollision();
 	void InitSceneManager();
 	
-	int Add(Object& pObject);
-	std::shared_ptr<Object>* CreateNewObject(Vector3& pos, ObjectType type);
+	int AddCharacter(Vector3& vec3Pos, ObjectType type);
+	std::shared_ptr<Object>* CreateNewObject(Vector3& pos, ObjectType type, ObjectType team);
 
 	void Destroy();
 

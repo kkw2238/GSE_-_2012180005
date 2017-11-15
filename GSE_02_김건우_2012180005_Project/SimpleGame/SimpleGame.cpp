@@ -48,13 +48,15 @@ void MouseInput(int button, int state, int x, int y)
 	std::uniform_int_distribution<int> ui(-100, 100);
 	std::uniform_real_distribution<float> uf(0.0f, 1.0f);
 
+	std::cout << x << " " << y << std::endl;
+	std::cout << x - WIN_WIDTH / 2 << " " << -y + WIN_HEIGHT / 2 << std::endl;
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
-		Vector3 vecPos = Vector3((float)x - 250.f, 250.f - (float)y, 0.0f);
+		Vector3 vecPos = Vector3(x - WIN_WIDTH / 2, - y + WIN_HEIGHT / 2 , 0.0f);
 		Vector3 vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
 		Vector4 vecColor = Vector4(uf(engine), uf(engine), uf(engine), uf(engine));
 	
-		g_objects->CreateNewObject(vecPos, OBJECT_CHARACTER);
+		g_objects->AddCharacter(vecPos, TEAM_2);
 	}
 }
 
@@ -74,7 +76,7 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(0, 0);
-	glutInitWindowSize(500, 500);
+	glutInitWindowSize(WIN_WIDTH, WIN_HEIGHT);
 	glutCreateWindow("Game Software Engineering KPU");
 
 	glewInit();
