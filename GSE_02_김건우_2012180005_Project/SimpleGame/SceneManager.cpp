@@ -260,6 +260,7 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 		fsize		 = 100.0f;
 		fLife		 = 500.0f;
 		vecDirection = Vector3(0.0f, 0.0f, 0.0f);
+		fLevel		 = LEVEL_BUILDING;
 		break;
 	case OBJECT_CHARACTER:
 		fValocity	 = 300.0f;
@@ -267,6 +268,7 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 		fLife		 = 100.0f;
 		vecColor = team == TEAM_1 ? Vector4(1.0f, 0.0f, 0.0f, 1.0f) : Vector4(0.0f, 0.0f, 1.0f, 1.0f);
 		vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
+		fLevel = LEVEL_CHARACTER;
 		break;
 	case OBJECT_BULLET:
 		fValocity	 = 300.0f;
@@ -274,6 +276,7 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 		fLife		 = 15.0f;
 		vecColor	 = team == TEAM_1 ? Vector4(1.0f, 0.0f, 0.0f, 1.0f) : Vector4(0.0f, 0.0f, 1.0f, 1.0f);
 		vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
+		fLevel = LEVEL_BULLET;
 		break;
 	case OBJECT_ARROW:
 		fValocity	 = 100.0f;
@@ -281,6 +284,7 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 		fLife		 = 15.0f;
 		vecColor	 = team == TEAM_1 ? Vector4(0.5f, 0.2f, 0.7f, 1.0f) : Vector4(1.0f, 1.0f, 0.0f, 1.0f);
 		vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
+		fLevel = LEVEL_ARROW;
 		break;
 	}
 

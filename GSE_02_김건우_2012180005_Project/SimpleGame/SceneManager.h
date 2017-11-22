@@ -14,6 +14,11 @@ const float LEVEL_SKY			= 0.1f;
 const float LEVEL_GROUND		= 0.2f;
 const float LEVEL_UNDERGROUND	= 0.3f;
 
+const float LEVEL_BUILDING = 0.1f;
+const float LEVEL_CHARACTER = 0.2f;
+const float LEVEL_BULLET = 0.3f;
+const float LEVEL_ARROW = LEVEL_BULLET;
+
 enum ObjectType { OBJECT_BUILDING, OBJECT_CHARACTER, OBJECT_BULLET, OBJECT_ARROW, TEAM_1, TEAM_2 };
 
 class Object
