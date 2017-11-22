@@ -8,10 +8,17 @@
 
 
 const int MAX_OBJECTS_COUNT = 5000;
-static enum ObjectType { OBJECT_BUILDING, OBJECT_CHARACTER, OBJECT_BULLET, OBJECT_ARROW, TEAM_1, TEAM_2 };
+
+const float LEVEL_GOD			= 0.0f;
+const float LEVEL_SKY			= 0.1f;
+const float LEVEL_GROUND		= 0.2f;
+const float LEVEL_UNDERGROUND	= 0.3f;
+
+enum ObjectType { OBJECT_BUILDING, OBJECT_CHARACTER, OBJECT_BULLET, OBJECT_ARROW, TEAM_1, TEAM_2 };
 
 class Object
 {
+	using RenderingLEVEL = float;
 private:
 	Vector3										m_vPos;
 	Vector3										m_vDirection;
@@ -22,6 +29,7 @@ private:
 	float										m_fSize;
 	float										m_fValocity;
 	float										m_fLife;
+	float										m_fMaxLife;
 	float										m_fActionTime;
 	float										m_fActionDelay;
 
@@ -30,13 +38,14 @@ private:
 	Collision									m_colAABB;
 	ObjectType									m_eObjectType;
 	ObjectType									m_eTeamType;
+	RenderingLEVEL								m_fRenderingLevel;
 
 	std::list<std::shared_ptr<Object>>			m_lpChildObject;
 	
 public:
 	Object();
 
-	Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity, ObjectType type, ObjectType team, float Life);
+	Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity, ObjectType type, ObjectType team, float Life, RenderingLEVEL flevel);
 	
 	~Object();
 

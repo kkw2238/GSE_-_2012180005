@@ -9,11 +9,12 @@ Object::Object()
 {
 }
 
-Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const Vector3& vDirection, float fValocity, ObjectType type, ObjectType team, float flife) :
+Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const Vector3& vDirection, float fValocity, ObjectType type, ObjectType team, float flife, RenderingLEVEL flevel) :
 	m_vPos(pos),
 	m_fSize(size),
 	m_vColor(color),
 	m_pRenderer(rend),
+	m_fMaxLife(flife),
 	m_vDirection(vDirection),
 	m_fValocity(fValocity),
 	m_colAABB(pos, size),
@@ -22,7 +23,8 @@ Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* r
 	m_bLive(true),
 	m_fActionTime(0.0f),
 	m_fActionDelay(0.0f),
-	m_eTeamType(team)
+	m_eTeamType(team),
+	m_fRenderingLevel(flevel)
 {
 	switch (type) {
 	case OBJECT_BUILDING :
@@ -48,19 +50,43 @@ Object::~Object()
 
 void Object::Render()
 {
-	if (m_eObjectType == OBJECT_BUILDING) 
-		m_pRenderer->DrawTexturedRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(), m_itexID);
+	Vector4 fColor;
+
+	if (m_eObjectType == OBJECT_BUILDING)
+		m_pRenderer->DrawTexturedRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(), m_itexID, m_fRenderingLevel);
 	else
-		m_pRenderer->DrawSolidRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW());
+		m_pRenderer->DrawSolidRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(), m_fRenderingLevel);
+
+	if (m_eTeamType == TEAM_1)
+		fColor = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+	else fColor = Vector4(0.0f, 0.0f, 1.0f, 1.0f);
+
+	if (m_eObjectType == OBJECT_BUILDING || m_eObjectType == OBJECT_CHARACTER)
+		m_pRenderer->DrawSolidRectGauge(m_vPos.GetX(), m_vPos.GetY() + m_fSize, m_vPos.GetZ(), 
+			m_fSize, 5.0f, fColor.GetX(), fColor.GetY(), fColor.GetZ(), fColor.GetW(), m_fLife / m_fMaxLife, m_fRenderingLevel);
 }
 
 // 
 
 void Object::Move(float Elpsedtime = 0.0f)
 {
-	if (m_vPos.GetX() < -WIN_WIDTH / 2  || m_vPos.GetX() > WIN_WIDTH / 2)  m_vDirection.SetX(m_vDirection.GetX() * -1);
-	if (m_vPos.GetY() < -WIN_HEIGHT / 2 || m_vPos.GetY() > WIN_HEIGHT / 2) m_vDirection.SetY(m_vDirection.GetY() * -1);
-	
+
+	if (m_vPos.GetX() < -WIN_WIDTH / 2 || m_vPos.GetX() > WIN_WIDTH / 2) {
+		if (m_eObjectType == OBJECT_BULLET || m_eObjectType == OBJECT_ARROW) {
+			SetLive(false);
+			return;
+		}
+		m_vDirection.SetX(m_vDirection.GetX() * -1);
+	}
+
+	if (m_vPos.GetY() < -WIN_HEIGHT / 2 || m_vPos.GetY() > WIN_HEIGHT / 2) {
+		if (m_eObjectType == OBJECT_BULLET || m_eObjectType == OBJECT_ARROW) {
+			SetLive(false);
+			return;
+		}
+		m_vDirection.SetY(m_vDirection.GetY() * -1);
+	}
+
 	Vector3 a = m_vDirection.Normalize() * m_fValocity * Elpsedtime;
 	m_vPos += m_vDirection.Normalize() * m_fValocity * Elpsedtime;
 
@@ -169,6 +195,10 @@ void SceneManager::CheckObjectCollision()
 
 			else iter++;
 		}
+
+		for (auto arrowiter = m_lArraowObjects.begin(); arrowiter != m_lArraowObjects.end(); arrowiter++)
+			if ((*arrowiter) != nullptr && (*arrowiter)->CollisionObject(*characteriter))
+				(*arrowiter).reset();
 	}
 		
 	// 건물 -> 화살, 총알 
@@ -221,10 +251,11 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 	float fsize = 0.0f;
 	float fValocity = 0.0f;
 	float fLife = 0.0f;
+	float fLevel = LEVEL_GOD;
 
 	switch (type) {
 	case OBJECT_BUILDING:
-		vecColor	 = Vector4(1.0f, 1.0f, 0.0f, 1.0f);
+		vecColor	 = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 		fValocity	 = 0.0f;
 		fsize		 = 100.0f;
 		fLife		 = 500.0f;
@@ -232,29 +263,29 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 		break;
 	case OBJECT_CHARACTER:
 		fValocity	 = 300.0f;
-		fsize		 = 10.0f;
-		fLife		 = 10.0f;
+		fsize		 = 30.0f;
+		fLife		 = 100.0f;
 		vecColor = team == TEAM_1 ? Vector4(1.0f, 0.0f, 0.0f, 1.0f) : Vector4(0.0f, 0.0f, 1.0f, 1.0f);
 		vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
 		break;
 	case OBJECT_BULLET:
 		fValocity	 = 300.0f;
-		fsize		 = 2.0f;
-		fLife		 = 20.0f;
+		fsize		 = 4.0f;
+		fLife		 = 15.0f;
 		vecColor	 = team == TEAM_1 ? Vector4(1.0f, 0.0f, 0.0f, 1.0f) : Vector4(0.0f, 0.0f, 1.0f, 1.0f);
 		vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
 		break;
 	case OBJECT_ARROW:
 		fValocity	 = 100.0f;
-		fsize		 = 2.0f;
-		fLife		 = 10.0f;
+		fsize		 = 4.0f;
+		fLife		 = 15.0f;
 		vecColor	 = team == TEAM_1 ? Vector4(0.5f, 0.2f, 0.7f, 1.0f) : Vector4(1.0f, 1.0f, 0.0f, 1.0f);
 		vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
 		break;
 	}
 
 	if (!IsFull()) {
-		std::shared_ptr<Object> pNewObject(new Object(pos, fsize, vecColor, m_pRenderer, vecDirection, fValocity, type, team, fLife ));
+		std::shared_ptr<Object> pNewObject(new Object(pos, fsize, vecColor, m_pRenderer, vecDirection, fValocity, type, team, fLife , fLevel));
 		switch (type)
 		{
 		case OBJECT_BUILDING:
