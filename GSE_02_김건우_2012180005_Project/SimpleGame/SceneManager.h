@@ -5,14 +5,14 @@
 #include "Collision.h"
 #include "Screen.h"
 #include "Time.h"
-
+#include <map>
 
 const int MAX_OBJECTS_COUNT = 5000;
 
 const float LEVEL_GOD			= 0.0f;
 const float LEVEL_SKY			= 0.1f;
 const float LEVEL_GROUND		= 0.2f;
-const float LEVEL_UNDERGROUND	= 0.3f;
+const float LEVEL_UNDERGROUND	= 0.4f;
 
 const float LEVEL_BUILDING = 0.1f;
 const float LEVEL_CHARACTER = 0.2f;
@@ -23,6 +23,7 @@ enum ObjectType { OBJECT_BUILDING, OBJECT_CHARACTER, OBJECT_BULLET, OBJECT_ARROW
 
 class Object
 {
+private:
 	using RenderingLEVEL = float;
 private:
 	Vector3										m_vPos;
@@ -39,6 +40,11 @@ private:
 	float										m_fActionDelay;
 
 	int											m_itexID;
+	int											m_iMaxSpriteCount;
+	int											m_iCurSpirteCount;
+	int											m_iSpriteXCount;
+	int											m_iSpriteYCount;
+
 	Renderer*									m_pRenderer;
 	Collision									m_colAABB;
 	ObjectType									m_eObjectType;
@@ -85,6 +91,7 @@ public:
 	ObjectType GetTeam() const { return m_eTeamType; }
 
 	bool CollisionObject(std::shared_ptr<Object>& other);
+
 };
 
 // 오브젝트 포인터를 넣어주고 비어 있는 공간에 새로운 오브젝트를 삽입.
@@ -95,6 +102,7 @@ public:
 
 private:
 	int m_iCurrentObjectCount;
+	int m_iBakcgroundTextureID;
 	float m_fTeam1CharacterCooldown;
 	float m_fTeam2CharacterCooldown;
 

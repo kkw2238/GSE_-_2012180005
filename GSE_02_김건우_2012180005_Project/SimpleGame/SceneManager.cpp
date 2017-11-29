@@ -24,20 +24,37 @@ Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* r
 	m_fActionTime(0.0f),
 	m_fActionDelay(0.0f),
 	m_eTeamType(team),
-	m_fRenderingLevel(flevel)
+	m_fRenderingLevel(flevel),
+	m_iMaxSpriteCount(1),
+	m_iCurSpirteCount(0)
 {
 	switch (type) {
 	case OBJECT_BUILDING :
 		m_fActionDelay = 1.0f;
-		if (team == TEAM_1) m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/Hormor.png");
-		if (team == TEAM_2) m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/Bart.png");
+		if (team == TEAM_1) 
+			m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/Hormor.png");
+		
+		if (team == TEAM_2) 
+			m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/Bart.png");
+		m_iMaxSpriteCount = 1;
+		m_iSpriteXCount = 1;
+		m_iSpriteYCount = 1;
 		break;
+
 	case OBJECT_CHARACTER : 
 		m_fActionDelay = 0.5f;
+		m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/squirrelSprite.png");
+		m_iMaxSpriteCount = 58;
+		m_iSpriteXCount = 8;
+		m_iSpriteYCount = 8;
 		break;
+
 	case OBJECT_BULLET : 
+		m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/flare.png");
 		break;
+
 	case OBJECT_ARROW :
+		m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/flare.png");
 		break;
 	}
 }
@@ -54,16 +71,28 @@ void Object::Render()
 
 	if (m_eObjectType == OBJECT_BUILDING)
 		m_pRenderer->DrawTexturedRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(), m_itexID, m_fRenderingLevel);
+	else if (m_eObjectType == OBJECT_CHARACTER)
+		m_pRenderer->DrawTexturedRectSeq(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(),
+			m_itexID, m_iCurSpirteCount % m_iSpriteXCount, (m_iCurSpirteCount / m_iSpriteYCount) % m_iSpriteYCount, m_iSpriteXCount, m_iSpriteYCount, m_fRenderingLevel);
+	else if (m_eObjectType == OBJECT_ARROW || m_eObjectType == OBJECT_BULLET) {
+		//m_pRenderer->DrawSolidRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(), m_fRenderingLevel);
+		m_pRenderer->DrawParticle(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), 5.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+			GetDirection().x * -1, GetDirection().y * -1, m_itexID, 0.001);
+	}
 	else
 		m_pRenderer->DrawSolidRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(), m_fRenderingLevel);
 
-	if (m_eTeamType == TEAM_1)
+
+	if (m_eTeamType == TEAM_1)	
 		fColor = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-	else fColor = Vector4(0.0f, 0.0f, 1.0f, 1.0f);
+	else 
+		fColor = Vector4(0.0f, 0.0f, 1.0f, 1.0f);
 
 	if (m_eObjectType == OBJECT_BUILDING || m_eObjectType == OBJECT_CHARACTER)
 		m_pRenderer->DrawSolidRectGauge(m_vPos.GetX(), m_vPos.GetY() + m_fSize, m_vPos.GetZ(), 
 			m_fSize, 5.0f, fColor.GetX(), fColor.GetY(), fColor.GetZ(), fColor.GetW(), m_fLife / m_fMaxLife, m_fRenderingLevel);
+
+	m_iCurSpirteCount = ++m_iCurSpirteCount >= m_iMaxSpriteCount ? 0 : m_iCurSpirteCount;
 }
 
 // 
@@ -158,7 +187,8 @@ void SceneManager::Update(float fElpsedtime)
 	
 	if (m_lCharacterObjects.size() > 0) 
 		for (auto iter = m_lCharacterObjects.begin(); iter != m_lCharacterObjects.end(); ++iter)
-			if ((*iter)->CoolOn()) 	(*iter)->AddChildObject(*CreateNewObject(Vector3((*iter)->GetPosition()), OBJECT_ARROW, (*iter)->GetTeam()));
+			if ((*iter)->CoolOn()) 	
+				(*iter)->AddChildObject(*CreateNewObject(Vector3((*iter)->GetPosition()), OBJECT_ARROW, (*iter)->GetTeam()));
 		
 
 	for (auto characiter = m_lCharacterObjects.begin(); characiter != m_lCharacterObjects.end(); ++characiter) (*characiter)->Update(fElpsedtime);
@@ -222,6 +252,9 @@ void SceneManager::CheckObjectCollision()
 
 void SceneManager::Render()
 {
+
+	m_pRenderer->DrawTexturedRect(0.0f, 0.0f, 0.0f , WIN_HEIGHT, 1.0f , 1.0f , 1.0f , 1.0f , m_iBakcgroundTextureID, LEVEL_UNDERGROUND);
+	
 	for (auto characiter = m_lCharacterObjects.begin(); characiter != m_lCharacterObjects.end(); ++characiter)		(*characiter)->Render();
 	for (auto buildingiter = m_lBuildingObjects.begin(); buildingiter != m_lBuildingObjects.end(); ++buildingiter)	(*buildingiter)->Render();
 	for (auto arrowiter = m_lArraowObjects.begin(); arrowiter != m_lArraowObjects.end(); ++arrowiter)				(*arrowiter)->Render();
@@ -349,6 +382,8 @@ void SceneManager::InitSceneManager()
 	CreateNewObject(Vector3(+000.0f, +300.0f, 0.0f), OBJECT_BUILDING, TEAM_1);
 	CreateNewObject(Vector3(+150.0f, +150.0f, 0.0f), OBJECT_BUILDING, TEAM_1);
 	CreateNewObject(Vector3(-150.0f, +150.0f, 0.0f), OBJECT_BUILDING, TEAM_1);
+
+	m_iBakcgroundTextureID = m_pRenderer->CreatePngTexture("./Textures/PNGs/BackGround.png");
 
 }
 
