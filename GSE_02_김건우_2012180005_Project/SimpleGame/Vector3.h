@@ -70,8 +70,7 @@ public:
 	}
 
 	Vector3 operator*(const float value) {
-		x *= value; y *= value; z *= value;
-		return Vector3(x, y, z);
+		return Vector3(x * value, y * value, z * value);
 	}
 };
 

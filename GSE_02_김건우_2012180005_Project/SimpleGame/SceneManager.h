@@ -68,7 +68,7 @@ public:
 	void Move(float Elpsedtime);
 
 	void SetValocity(const float fValocity) { m_fValocity = fValocity; }
-	void SetDirection(const Vector3& vDirection) { m_vDirection = vDirection; }
+	void SetDirection(Vector3& vDirection) { m_vDirection = vDirection.Normalize(); }
 	void SetColor(Vector4& vColor) { m_vColor = vColor; }
 	void SetLive(bool isDead) { m_bLive = isDead; }
 
@@ -131,8 +131,6 @@ public:
 	std::shared_ptr<Object>* CreateNewObject(Vector3& pos, ObjectType type, ObjectType team);
 
 	void Destroy();
-
-	int RandomCreateObject(const int n);
 
 };
 

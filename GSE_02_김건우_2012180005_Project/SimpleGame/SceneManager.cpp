@@ -47,14 +47,17 @@ Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* r
 		m_iMaxSpriteCount = 58;
 		m_iSpriteXCount = 8;
 		m_iSpriteYCount = 8;
+		m_vDirection = m_vDirection.Normalize();
 		break;
 
 	case OBJECT_BULLET : 
 		m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/flare.png");
+		m_vDirection = m_vDirection.Normalize();
 		break;
 
 	case OBJECT_ARROW :
 		m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/flare.png");
+		m_vDirection = m_vDirection.Normalize();
 		break;
 	}
 }
@@ -74,10 +77,10 @@ void Object::Render()
 	else if (m_eObjectType == OBJECT_CHARACTER)
 		m_pRenderer->DrawTexturedRectSeq(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(),
 			m_itexID, m_iCurSpirteCount % m_iSpriteXCount, (m_iCurSpirteCount / m_iSpriteYCount) % m_iSpriteYCount, m_iSpriteXCount, m_iSpriteYCount, m_fRenderingLevel);
-	else if (m_eObjectType == OBJECT_ARROW || m_eObjectType == OBJECT_BULLET) {
+	else if (m_eObjectType == OBJECT_BULLET) {
 		//m_pRenderer->DrawSolidRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(), m_fRenderingLevel);
 		m_pRenderer->DrawParticle(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), 5.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			GetDirection().x * -1, GetDirection().y * -1, m_itexID, 0.001);
+			GetDirection().x * -1, GetDirection().y * -1, m_itexID, m_fActionTime);
 	}
 	else
 		m_pRenderer->DrawSolidRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(), m_fRenderingLevel);
@@ -116,8 +119,7 @@ void Object::Move(float Elpsedtime = 0.0f)
 		m_vDirection.SetY(m_vDirection.GetY() * -1);
 	}
 
-	Vector3 a = m_vDirection.Normalize() * m_fValocity * Elpsedtime;
-	m_vPos += m_vDirection.Normalize() * m_fValocity * Elpsedtime;
+	m_vPos += m_vDirection * m_fValocity * Elpsedtime;
 
 }
 
@@ -344,33 +346,6 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 	return nullptr;
 }
 
-int SceneManager::RandomCreateObject(const int n)
-{
-//	std::mt19937 engine((unsigned int)time(NULL));
-//
-//	std::uniform_int_distribution<int> ui(-250, 250);
-//	std::uniform_real_distribution<float> uf(0.0f, 1.0f);
-//	std::uniform_real_distribution<float> ufspd(0.0f, 100.0f);
-//
-//	int i = 0;
-//	for (i = 0; i < n; i++)
-//	{
-//		if (!IsFull())
-//		{
-//			Vector3 vecPos = Vector3(ui(engine) - 100, 100 - ui(engine), 0.0f);
-//			Vector3 vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
-//			Vector4 vecColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-//
-//			Object tmp(vecPos, 20.0f, vecColor, m_pRenderer, vecDirection, 10.0f, OBJECT_CHARACTER, 100.0f);
-//			Add(tmp);
-//		}
-//		else
-//			return i;
-//	}
-//
-	return 1;
-}
-
 void SceneManager::InitSceneManager()
 {
 	m_pRenderer = new Renderer(WIN_WIDTH, WIN_HEIGHT);
@@ -386,7 +361,6 @@ void SceneManager::InitSceneManager()
 	m_iBakcgroundTextureID = m_pRenderer->CreatePngTexture("./Textures/PNGs/BackGround.png");
 
 }
-
 
 
 void SceneManager::Destroy() 
