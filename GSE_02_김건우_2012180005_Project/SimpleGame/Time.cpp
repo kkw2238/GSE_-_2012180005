@@ -35,7 +35,7 @@ void Time::Update(float fps)
 {
 	m_ffps = fps;
 	m_dCurframeTime = ::timeGetTime();
-	
+	// 10
 	while ((float)(m_dCurframeTime - m_dPreframeTime) * m_fTimeScale < 1.0f / m_ffps) {
 		m_dCurframeTime = ::timeGetTime();
 	}

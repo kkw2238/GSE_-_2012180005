@@ -50,7 +50,8 @@ private:
 	ObjectType									m_eObjectType;
 	ObjectType									m_eTeamType;
 	RenderingLEVEL								m_fRenderingLevel;
-
+	char										m_pHPbuf[50];
+	
 	std::list<std::shared_ptr<Object>>			m_lpChildObject;
 	
 public:
@@ -103,12 +104,16 @@ public:
 private:
 	int m_iCurrentObjectCount;
 	int m_iBakcgroundTextureID;
+	int m_iBGMIndex;
+	int m_iBoomIndex;
+
 	float m_fTeam1CharacterCooldown;
 	float m_fTeam2CharacterCooldown;
 
 	Renderer* m_pRenderer;
 	Screen m_sScreen;
 	Time m_tTime;
+	Sound* m_pSound;
 
 	std::list<std::shared_ptr<Object>>	m_lBuildingObjects;
 	std::list<std::shared_ptr<Object>>	m_lBulletObjects;

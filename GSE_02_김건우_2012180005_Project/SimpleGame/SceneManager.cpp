@@ -77,24 +77,27 @@ void Object::Render()
 	else if (m_eObjectType == OBJECT_CHARACTER)
 		m_pRenderer->DrawTexturedRectSeq(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(),
 			m_itexID, m_iCurSpirteCount % m_iSpriteXCount, (m_iCurSpirteCount / m_iSpriteYCount) % m_iSpriteYCount, m_iSpriteXCount, m_iSpriteYCount, m_fRenderingLevel);
-	else if (m_eObjectType == OBJECT_BULLET) {
-		//m_pRenderer->DrawSolidRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(), m_fRenderingLevel);
+	else if (m_eObjectType == OBJECT_BULLET) 
 		m_pRenderer->DrawParticle(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), 5.0f, 1.0f, 1.0f, 1.0f, 1.0f,
 			GetDirection().x * -1, GetDirection().y * -1, m_itexID, m_fActionTime);
-	}
 	else
 		m_pRenderer->DrawSolidRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(), m_fRenderingLevel);
 
 
 	if (m_eTeamType == TEAM_1)	
 		fColor = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-	else 
+	else if((m_eTeamType == TEAM_2))
 		fColor = Vector4(0.0f, 0.0f, 1.0f, 1.0f);
 
-	if (m_eObjectType == OBJECT_BUILDING || m_eObjectType == OBJECT_CHARACTER)
-		m_pRenderer->DrawSolidRectGauge(m_vPos.GetX(), m_vPos.GetY() + m_fSize, m_vPos.GetZ(), 
+	if (m_eObjectType == OBJECT_BUILDING || m_eObjectType == OBJECT_CHARACTER) {
+
+		sprintf_s(m_pHPbuf, "HP : %d", (int)m_fLife);
+
+		m_pRenderer->DrawSolidRectGauge(m_vPos.GetX(), m_vPos.GetY() + m_fSize / 2, m_vPos.GetZ(),
 			m_fSize, 5.0f, fColor.GetX(), fColor.GetY(), fColor.GetZ(), fColor.GetW(), m_fLife / m_fMaxLife, m_fRenderingLevel);
 
+		m_pRenderer->DrawTextW(m_vPos.GetX() - 25 , m_vPos.GetY() + m_fSize / 2, GLUT_BITMAP_8_BY_13, 1.0f, 1.0f, 1.0f, m_pHPbuf);
+	}
 	m_iCurSpirteCount = ++m_iCurSpirteCount >= m_iMaxSpriteCount ? 0 : m_iCurSpirteCount;
 }
 
@@ -203,53 +206,69 @@ void SceneManager::Update(float fElpsedtime)
 
 void SceneManager::CheckObjectCollision() 
 {
+
+	std::list<std::shared_ptr<Object>>::iterator characteriter;
+	std::list<std::shared_ptr<Object>>::iterator buildingiter;
+	std::list<std::shared_ptr<Object>>::iterator arrowiter;
+	std::list<std::shared_ptr<Object>>::iterator bulletiter;
+
 	// 플레이어 -> 건물, 플레이어 -> 총알
-	for (auto characteriter = m_lCharacterObjects.begin(); characteriter != m_lCharacterObjects.end(); characteriter++) {
-		for(auto buildingiter = m_lBuildingObjects.begin(); buildingiter != m_lBuildingObjects.end(); buildingiter++) {
+	for (characteriter = m_lCharacterObjects.begin(); characteriter != m_lCharacterObjects.end(); characteriter++) {
+		for(buildingiter = m_lBuildingObjects.begin(); buildingiter != m_lBuildingObjects.end(); buildingiter++) {
 			if ((*characteriter) != nullptr && (*characteriter)->CollisionObject(*buildingiter)) {
 				(*characteriter).reset();
 				ClearDeletedObject(m_lArraowObjects, OBJECT_ARROW);
+				m_pSound->PlaySoundW(m_iBoomIndex, false, 1.0f);
 				break;
 			}
 		}
 
-		for (auto iter = m_lBulletObjects.begin(); iter != m_lBulletObjects.end();) {
-			if ((*iter) == nullptr) {
-				iter++;
+		for (bulletiter = m_lBulletObjects.begin(); bulletiter != m_lBulletObjects.end();) {
+			if ((*bulletiter) == nullptr) {
+				bulletiter++;
 				continue;
 			}
 
-			if ((*characteriter) != nullptr && (*characteriter)->CollisionObject(*iter)) {
+			if ((*characteriter) != nullptr && (*characteriter)->CollisionObject(*bulletiter)) {
 				(*characteriter).reset();
+				m_pSound->PlaySoundW(m_iBoomIndex, false, 1.0f);
 				ClearDeletedObject(m_lArraowObjects, OBJECT_ARROW);
 				break;
 			}
 
-			else iter++;
+			else bulletiter++;
 		}
 
-		for (auto arrowiter = m_lArraowObjects.begin(); arrowiter != m_lArraowObjects.end(); arrowiter++)
-			if ((*arrowiter) != nullptr && (*arrowiter)->CollisionObject(*characteriter))
+		for (arrowiter = m_lArraowObjects.begin(); arrowiter != m_lArraowObjects.end(); arrowiter++)
+			if ((*arrowiter) != nullptr && (*arrowiter)->CollisionObject(*characteriter)) {
 				(*arrowiter).reset();
+				m_pSound->PlaySoundW(m_iBoomIndex, false, 1.0f);
+			}
 	}
 		
 	// 건물 -> 화살, 총알 
-	for (auto buildingiter = m_lBuildingObjects.begin(); buildingiter != m_lBuildingObjects.end(); buildingiter++) {
+	for (buildingiter = m_lBuildingObjects.begin(); buildingiter != m_lBuildingObjects.end(); buildingiter++) {
 		if (*buildingiter == nullptr) continue;
 
-		for (auto bulletiter = m_lBulletObjects.begin(); bulletiter != m_lBulletObjects.end(); bulletiter++)
-			if ((*bulletiter) != nullptr && (*bulletiter)->CollisionObject(*buildingiter))
+		for (bulletiter = m_lBulletObjects.begin(); bulletiter != m_lBulletObjects.end(); bulletiter++)
+			if ((*bulletiter) != nullptr && (*bulletiter)->CollisionObject(*buildingiter)) {
 				(*bulletiter).reset();
+				m_pSound->PlaySoundW(m_iBoomIndex, false, 1.0f);
+			}
 
-		for (auto arrowiter = m_lArraowObjects.begin(); arrowiter != m_lArraowObjects.end(); arrowiter++)
-			if ((*arrowiter) != nullptr && (*arrowiter)->CollisionObject(*buildingiter))
+		for (arrowiter = m_lArraowObjects.begin(); arrowiter != m_lArraowObjects.end(); arrowiter++)
+			if ((*arrowiter) != nullptr && (*arrowiter)->CollisionObject(*buildingiter)) {
 				(*arrowiter).reset();
+				m_pSound->PlaySoundW(m_iBoomIndex, false, 1.0f);
+			}
 	}
 
 	ClearDeletedObject(m_lArraowObjects, OBJECT_ARROW);
 	ClearDeletedObject(m_lBuildingObjects, OBJECT_BUILDING);
 	ClearDeletedObject(m_lCharacterObjects, OBJECT_CHARACTER);
 	ClearDeletedObject(m_lBulletObjects, OBJECT_BULLET);
+
+
 }
 
 void SceneManager::Render()
@@ -351,6 +370,13 @@ void SceneManager::InitSceneManager()
 	m_pRenderer = new Renderer(WIN_WIDTH, WIN_HEIGHT);
 	m_sScreen = Screen(WIN_WIDTH, WIN_HEIGHT);
 	m_tTime = Time();
+	m_pSound = new Sound();
+
+	m_iBGMIndex = m_pSound->CreateSound("./Dependencies/SoundSamples/ophelia.mp3");
+	m_pSound->PlaySoundW(m_iBGMIndex, true, 1.0f);
+
+	m_iBoomIndex = m_pSound->CreateSound("./Dependencies/SoundSamples/explosion.WAV");
+
 	CreateNewObject(Vector3(+000.0f, -300.0f, 0.0f), OBJECT_BUILDING, TEAM_2);
 	CreateNewObject(Vector3(+150.0f, -150.0f, 0.0f), OBJECT_BUILDING, TEAM_2);
 	CreateNewObject(Vector3(-150.0f, -150.0f, 0.0f), OBJECT_BUILDING, TEAM_2);
@@ -378,7 +404,7 @@ void SceneManager::Destroy()
 
 void SceneManager::Run()
 {
-	m_tTime.Update(60.0f);
+	m_tTime.Update(100.0);
 	float fElapsedTime = m_tTime.Tick();
 
 	Update(fElapsedTime);
