@@ -9,7 +9,7 @@ Object::Object()
 {
 }
 
-Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const Vector3& vDirection, float fValocity, ObjectType type, ObjectType team, float flife, RenderingLEVEL flevel) :
+Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const Vector3& vDirection, float fValocity, ObjectType type, TeamType team, float flife, int texID, RenderingLEVEL flevel) :
 	m_vPos(pos),
 	m_fSize(size),
 	m_vColor(color),
@@ -26,16 +26,12 @@ Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* r
 	m_eTeamType(team),
 	m_fRenderingLevel(flevel),
 	m_iMaxSpriteCount(1),
-	m_iCurSpirteCount(0)
+	m_iCurSpirteCount(0),
+	m_itexID(texID)
 {
 	switch (type) {
 	case OBJECT_BUILDING :
 		m_fActionDelay = 1.0f;
-		if (team == TEAM_1) 
-			m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/Hormor.png");
-		
-		if (team == TEAM_2) 
-			m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/Bart.png");
 		m_iMaxSpriteCount = 1;
 		m_iSpriteXCount = 1;
 		m_iSpriteYCount = 1;
@@ -43,7 +39,7 @@ Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* r
 
 	case OBJECT_CHARACTER : 
 		m_fActionDelay = 0.5f;
-		m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/squirrelSprite.png");
+		
 		m_iMaxSpriteCount = 58;
 		m_iSpriteXCount = 8;
 		m_iSpriteYCount = 8;
@@ -51,12 +47,10 @@ Object::Object(const Vector3& pos, float size, const Vector4& color, Renderer* r
 		break;
 
 	case OBJECT_BULLET : 
-		m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/flare.png");
 		m_vDirection = m_vDirection.Normalize();
 		break;
 
 	case OBJECT_ARROW :
-		m_itexID = m_pRenderer->CreatePngTexture("./Textures/PNGs/flare.png");
 		m_vDirection = m_vDirection.Normalize();
 		break;
 	}
@@ -77,9 +71,10 @@ void Object::Render()
 	else if (m_eObjectType == OBJECT_CHARACTER)
 		m_pRenderer->DrawTexturedRectSeq(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(),
 			m_itexID, m_iCurSpirteCount % m_iSpriteXCount, (m_iCurSpirteCount / m_iSpriteYCount) % m_iSpriteYCount, m_iSpriteXCount, m_iSpriteYCount, m_fRenderingLevel);
-	else if (m_eObjectType == OBJECT_BULLET) 
-		m_pRenderer->DrawParticle(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), 5.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			GetDirection().x * -1, GetDirection().y * -1, m_itexID, m_fActionTime);
+	else if (m_eObjectType == OBJECT_BULLET) {
+			m_pRenderer->DrawParticle(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), 5.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+				GetDirection().x * -1, GetDirection().y * -1, m_itexID, m_fActionTime, LEVEL_BULLET);
+	}
 	else
 		m_pRenderer->DrawSolidRect(m_vPos.GetX(), m_vPos.GetY(), m_vPos.GetZ(), m_fSize, m_vColor.GetX(), m_vColor.GetY(), m_vColor.GetZ(), m_vColor.GetW(), m_fRenderingLevel);
 
@@ -169,7 +164,8 @@ bool Object::CollisionObject(std::shared_ptr<Object>& other)
 SceneManager::SceneManager() : 
 	m_iCurrentObjectCount(0), 
 	m_fTeam1CharacterCooldown(0.0f),
-	m_fTeam2CharacterCooldown(0.0f)
+	m_fTeam2CharacterCooldown(0.0f),
+	m_fSnowTime(0.0f)
 {
 	InitSceneManager();
 };
@@ -182,6 +178,7 @@ void SceneManager::Update(float fElpsedtime)
 
 	m_fTeam1CharacterCooldown += fElpsedtime;
 	m_fTeam2CharacterCooldown += fElpsedtime;
+	m_fSnowTime += fElpsedtime;
 
 	AddCharacter(Vector3(ui(engine), uih(engine), 0.0f), TEAM_1);
 
@@ -274,8 +271,9 @@ void SceneManager::CheckObjectCollision()
 void SceneManager::Render()
 {
 
-	m_pRenderer->DrawTexturedRect(0.0f, 0.0f, 0.0f , WIN_HEIGHT, 1.0f , 1.0f , 1.0f , 1.0f , m_iBakcgroundTextureID, LEVEL_UNDERGROUND);
-	
+	m_pRenderer->DrawTexturedRect(0.0f, 0.0f, 0.0f , WIN_HEIGHT, 1.0f , 1.0f , 1.0f , 1.0f , m_iTexID[4], LEVEL_UNDERGROUND);
+	m_pRenderer->DrawParticleClimate(0, 0, 0, 5, 1, 1, 1, 1, -0.5f, -0.5f, m_iTexID[5], m_fSnowTime, 0.01);
+
 	for (auto characiter = m_lCharacterObjects.begin(); characiter != m_lCharacterObjects.end(); ++characiter)		(*characiter)->Render();
 	for (auto buildingiter = m_lBuildingObjects.begin(); buildingiter != m_lBuildingObjects.end(); ++buildingiter)	(*buildingiter)->Render();
 	for (auto arrowiter = m_lArraowObjects.begin(); arrowiter != m_lArraowObjects.end(); ++arrowiter)				(*arrowiter)->Render();
@@ -283,7 +281,7 @@ void SceneManager::Render()
 
 }
 
-int SceneManager::AddCharacter(Vector3& vec3Pos, ObjectType type)
+int SceneManager::AddCharacter(Vector3& vec3Pos, TeamType type)
 { 
 	if (type == TEAM_1 && m_fTeam1CharacterCooldown < 1.0f) return -1;
 	if (type == TEAM_2 && m_fTeam2CharacterCooldown < 2.0f) return -1;
@@ -295,7 +293,7 @@ int SceneManager::AddCharacter(Vector3& vec3Pos, ObjectType type)
 	return 1;
 }
 
-std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType type, ObjectType team)
+std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType type, TeamType team)
 {
 	std::mt19937 engine((unsigned int)time(NULL));
 	std::uniform_int_distribution<int> ui(-250, 250);
@@ -306,6 +304,7 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 	float fValocity = 0.0f;
 	float fLife = 0.0f;
 	float fLevel = LEVEL_GOD;
+	int texID = 0;
 
 	switch (type) {
 	case OBJECT_BUILDING:
@@ -315,14 +314,16 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 		fLife		 = 500.0f;
 		vecDirection = Vector3(0.0f, 0.0f, 0.0f);
 		fLevel		 = LEVEL_BUILDING;
+		texID		 = team == TEAM_1 ? m_iTexID[0] : m_iTexID[1];
 		break;
 	case OBJECT_CHARACTER:
 		fValocity	 = 300.0f;
 		fsize		 = 30.0f;
 		fLife		 = 100.0f;
-		vecColor = team == TEAM_1 ? Vector4(1.0f, 0.0f, 0.0f, 1.0f) : Vector4(0.0f, 0.0f, 1.0f, 1.0f);
+		vecColor	 = team == TEAM_1 ? Vector4(1.0f, 0.0f, 0.0f, 1.0f) : Vector4(0.0f, 0.0f, 1.0f, 1.0f);
 		vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
-		fLevel = LEVEL_CHARACTER;
+		fLevel		 = LEVEL_CHARACTER;
+		texID		 = m_iTexID[2];
 		break;
 	case OBJECT_BULLET:
 		fValocity	 = 300.0f;
@@ -330,7 +331,8 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 		fLife		 = 15.0f;
 		vecColor	 = team == TEAM_1 ? Vector4(1.0f, 0.0f, 0.0f, 1.0f) : Vector4(0.0f, 0.0f, 1.0f, 1.0f);
 		vecDirection = Vector3(ui(engine), ui(engine), ui(engine));
-		fLevel = LEVEL_BULLET;
+		fLevel		 = LEVEL_BULLET;
+		texID		 = m_iTexID[3];
 		break;
 	case OBJECT_ARROW:
 		fValocity	 = 100.0f;
@@ -343,7 +345,7 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 	}
 
 	if (!IsFull()) {
-		std::shared_ptr<Object> pNewObject(new Object(pos, fsize, vecColor, m_pRenderer, vecDirection, fValocity, type, team, fLife , fLevel));
+		std::shared_ptr<Object> pNewObject(new Object(pos, fsize, vecColor, m_pRenderer, vecDirection, fValocity, type, team, fLife , texID ,fLevel));
 		switch (type)
 		{
 		case OBJECT_BUILDING:
@@ -368,6 +370,14 @@ std::shared_ptr<Object>* SceneManager::CreateNewObject(Vector3& pos, ObjectType 
 void SceneManager::InitSceneManager()
 {
 	m_pRenderer = new Renderer(WIN_WIDTH, WIN_HEIGHT);
+	m_iTexID = new int[6];
+		m_iTexID[0] = m_pRenderer->CreatePngTexture("./Textures/PNGs/Hormor.png");
+		m_iTexID[1] = m_pRenderer->CreatePngTexture("./Textures/PNGs/Bart.png");
+		m_iTexID[2] = m_pRenderer->CreatePngTexture("./Textures/PNGs/squirrelSprite.png");
+		m_iTexID[3] = m_pRenderer->CreatePngTexture("./Textures/PNGs/flare.png");
+		m_iTexID[4] = m_pRenderer->CreatePngTexture("./Textures/PNGs/BackGround.png");
+		m_iTexID[5] = m_pRenderer->CreatePngTexture("./Textures/PNGs/Snow.png");
+
 	m_sScreen = Screen(WIN_WIDTH, WIN_HEIGHT);
 	m_tTime = Time();
 	m_pSound = new Sound();
@@ -383,9 +393,6 @@ void SceneManager::InitSceneManager()
 	CreateNewObject(Vector3(+000.0f, +300.0f, 0.0f), OBJECT_BUILDING, TEAM_1);
 	CreateNewObject(Vector3(+150.0f, +150.0f, 0.0f), OBJECT_BUILDING, TEAM_1);
 	CreateNewObject(Vector3(-150.0f, +150.0f, 0.0f), OBJECT_BUILDING, TEAM_1);
-
-	m_iBakcgroundTextureID = m_pRenderer->CreatePngTexture("./Textures/PNGs/BackGround.png");
-
 }
 
 

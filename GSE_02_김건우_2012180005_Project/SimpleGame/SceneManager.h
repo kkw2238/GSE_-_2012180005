@@ -19,7 +19,8 @@ const float LEVEL_CHARACTER = 0.2f;
 const float LEVEL_BULLET = 0.3f;
 const float LEVEL_ARROW = LEVEL_BULLET;
 
-enum ObjectType { OBJECT_BUILDING, OBJECT_CHARACTER, OBJECT_BULLET, OBJECT_ARROW, TEAM_1, TEAM_2 };
+enum ObjectType { OBJECT_BUILDING, OBJECT_CHARACTER, OBJECT_BULLET, OBJECT_ARROW};
+enum TeamType { TEAM_1, TEAM_2 };
 
 class Object
 {
@@ -48,7 +49,7 @@ private:
 	Renderer*									m_pRenderer;
 	Collision									m_colAABB;
 	ObjectType									m_eObjectType;
-	ObjectType									m_eTeamType;
+	TeamType									m_eTeamType;
 	RenderingLEVEL								m_fRenderingLevel;
 	char										m_pHPbuf[50];
 	
@@ -57,7 +58,7 @@ private:
 public:
 	Object();
 
-	Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity, ObjectType type, ObjectType team, float Life, RenderingLEVEL flevel);
+	Object(const Vector3& pos, float size, const Vector4& color, Renderer* rend, const  Vector3& vDirection, float fValocity, ObjectType type, TeamType team, float Life, int texID, RenderingLEVEL flevel);
 	
 	~Object();
 
@@ -89,7 +90,7 @@ public:
 	Vector3 GetPosition() const { return m_vPos; }
 	Collision GetCollision() const { return m_colAABB; }
 	ObjectType GetType() const { return m_eObjectType; }
-	ObjectType GetTeam() const { return m_eTeamType; }
+	TeamType GetTeam() const { return m_eTeamType; }
 
 	bool CollisionObject(std::shared_ptr<Object>& other);
 
@@ -103,12 +104,13 @@ public:
 
 private:
 	int m_iCurrentObjectCount;
-	int m_iBakcgroundTextureID;
+	int* m_iTexID;
 	int m_iBGMIndex;
 	int m_iBoomIndex;
 
 	float m_fTeam1CharacterCooldown;
 	float m_fTeam2CharacterCooldown;
+	float m_fSnowTime;
 
 	Renderer* m_pRenderer;
 	Screen m_sScreen;
@@ -132,8 +134,8 @@ public:
 	void CheckObjectCollision();
 	void InitSceneManager();
 	
-	int AddCharacter(Vector3& vec3Pos, ObjectType type);
-	std::shared_ptr<Object>* CreateNewObject(Vector3& pos, ObjectType type, ObjectType team);
+	int AddCharacter(Vector3& vec3Pos, TeamType type);
+	std::shared_ptr<Object>* CreateNewObject(Vector3& pos, ObjectType type, TeamType team);
 
 	void Destroy();
 
